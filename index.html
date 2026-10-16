@@ -2,12 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-    <meta name="theme-color" content="#0f172a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="RailSpring">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RailSpring: Sistem Informasi Data Pegas Sarana Kereta Api</title>
     <link rel="icon" href="https://commons.wikimedia.org/wiki/Special:FilePath/Logo_PT_Kereta_Api_Indonesia_(Persero)_2020.svg" type="image/svg+xml">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,22 +11,9 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
     <style>
-        html, body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #f3f4f6;
-            height: 100vh;
-            height: 100dvh;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-text-size-adjust: 100%;
-        }
-        .safe-bottom { padding-bottom: calc(4.25rem + env(safe-area-inset-bottom, 0px)); }
-        @media (min-width: 768px) { .safe-bottom { padding-bottom: 2rem; } }
-        .touch-scroll { -webkit-overflow-scrolling: touch; }
-        @media (max-width: 767px) {
-            input, select, textarea { font-size: 16px !important; }
-            .pro-zoom-card:hover { transform: none; }
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .dark-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
         .dark-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .dark-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -155,13 +137,10 @@
         </div>
     </div>
 
-    <!-- APP LAYOUT (KOMPATIBEL ANDROID, iOS & PC) -->
-    <div id="app-layout" class="hidden w-full h-full flex opacity-0 transition-opacity duration-500 bg-gray-50 relative overflow-hidden">
-        <!-- BACKDROP DRAWER MOBILE (ANDROID / iOS) -->
-        <div id="mobile-sidebar-backdrop" onclick="window.toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 hidden md:hidden transition-opacity"></div>
-
-        <!-- SIDEBAR (PC & MOBILE SLIDE-OVER DRAWER) -->
-        <aside id="main-sidebar" class="fixed md:static inset-y-0 left-0 w-64 bg-slate-900 text-white flex flex-col z-50 transform -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 shadow-2xl md:shadow-none">
+    <!-- APP LAYOUT -->
+    <div id="app-layout" class="hidden w-full h-full flex opacity-0 transition-opacity duration-500 bg-gray-50">
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-slate-900 text-white flex flex-col z-40 hidden md:flex shrink-0">
             <div class="p-5 flex items-center gap-3 border-b border-slate-800 bg-slate-950 h-[72px] shrink-0">
                 <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Logo_PT_Kereta_Api_Indonesia_(Persero)_2020.svg" alt="Logo KAI" height="32" style="height:32px;width:auto;" class="h-8 w-auto object-contain bg-white px-2 py-1 rounded">
                 <h2 class="font-bold text-lg tracking-wide">RailSpring</h2>
@@ -188,17 +167,19 @@
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col h-full overflow-hidden relative">
-            <header class="bg-white shadow-sm border-b border-gray-200 px-3 sm:px-6 h-[64px] sm:h-[72px] flex justify-between items-center z-30 shrink-0">
-                <div class="flex items-center gap-2.5 sm:gap-4 min-w-0">
-                    <button class="md:hidden w-9 h-9 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 flex items-center justify-center shrink-0" onclick="window.toggleMobileSidebar()"><i class="fa-solid fa-bars text-base"></i></button>
-                    <h1 id="header-title" class="text-sm sm:text-xl font-bold text-gray-800 truncate">Dashboard & Pelacakan</h1>
-                    <button onclick="window.openServerSyncModal()" id="header-sync-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] sm:text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 shrink-0 cursor-pointer" title="Klik untuk Pengaturan Server Penyimpanan & Sinkronisasi Lintas Perangkat">
-                        <span id="sync-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span id="sync-status-text" class="hidden xs:inline sm:inline">Server Tersimpan</span>
-                        <i class="fa-solid fa-cloud-arrow-up text-[10px] ml-0.5"></i>
+            <header class="bg-white shadow-sm border-b border-gray-200 px-6 h-[72px] flex justify-between items-center z-30 shrink-0">
+                <div class="flex items-center gap-4">
+                    <button class="md:hidden text-gray-500 hover:text-gray-700" onclick="document.querySelector('aside').classList.toggle('hidden')"><i class="fa-solid fa-bars text-xl"></i></button>
+                    <h1 id="header-title" class="text-xl font-bold text-gray-800">Dashboard & Pelacakan</h1>
+                    <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Auto-Sync Multi-Bulan & Typo-Fix Aktif
+                    </span>
+                    <button type="button" id="header-supabase-btn" onclick="window.openSupabaseModal()" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 cursor-pointer shadow-sm">
+                        <span id="header-supabase-dot" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        <span id="header-supabase-text">Cloud Supabase: Klik untuk Set</span>
                     </button>
                 </div>
-                <div class="flex items-center gap-2 sm:gap-3 cursor-pointer hover:bg-gray-100/70 p-1 sm:p-1.5 sm:pl-3 rounded-full shrink-0" onclick="window.switchMenu('pengaturan')">
+                <div class="flex items-center gap-3 cursor-pointer hover:bg-gray-100/70 p-1.5 pl-3 rounded-full" onclick="window.switchMenu('pengaturan')">
                     <div class="hidden sm:block text-right">
                         <p class="text-sm font-semibold text-gray-800 leading-tight header-user-name">Mario Putra</p>
                         <p class="text-xs text-gray-500 header-user-role">Administrator</p>
@@ -209,7 +190,7 @@
                 </div>
             </header>
 
-            <div class="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 bg-gray-50 dark-scrollbar touch-scroll safe-bottom">
+            <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-gray-50 dark-scrollbar">
                 <!-- VIEW: DASHBOARD -->
                 <div id="view-dashboard" class="view-section animate-fade-in-up space-y-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -237,6 +218,7 @@
                             <p class="text-xs text-gray-500 mt-0.5">Mendukung pembacaan otomatis seluruh bulan (Bulan 4–9, Oktober, dst.), parameter dinamis tiap jenis pegas, serta koreksi salah ketik otomatis.</p>
                         </div>
                         <div class="flex flex-wrap gap-2.5 shrink-0">
+                            <button onclick="window.openSupabaseModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm inline-flex items-center gap-2"><i class="fa-solid fa-cloud-bolt"></i> Konektor Supabase</button>
                             <button onclick="window.switchMenu('setsarana')" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-2 rounded-lg text-xs font-bold shadow-sm inline-flex items-center gap-2"><i class="fa-solid fa-layer-group"></i> Buat Set Sarana</button>
                             <button onclick="window.switchMenu('data'); window.openExcelModal();" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-sm inline-flex items-center gap-2"><i class="fa-solid fa-file-excel"></i> Upload Excel</button>
                         </div>
@@ -427,6 +409,8 @@
                         <div class="flex flex-wrap gap-2 w-full lg:w-auto">
                             <button onclick="window.openExcelModal()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm text-xs sm:text-sm"><i class="fa-solid fa-file-excel mr-2"></i>Upload File Baru</button>
                             <button onclick="window.openLanjutanModal()" class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg font-medium shadow-sm text-xs sm:text-sm"><i class="fa-solid fa-file-import mr-2"></i>Upload File Lanjutan</button>
+                            <button onclick="window.syncFromSupabaseCloud(true)" class="bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 rounded-lg font-medium shadow-sm text-xs sm:text-sm"><i class="fa-solid fa-cloud-arrow-down mr-1.5"></i>Sinkronkan Cloud</button>
+                            <button onclick="window.openSupabaseModal()" class="bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 px-3.5 py-2 rounded-lg font-semibold shadow-sm text-xs"><i class="fa-solid fa-plug mr-1"></i>Setup Supabase</button>
                             <button onclick="window.clearAllArchives()" class="bg-red-600 hover:bg-red-700 text-white px-3.5 py-2 rounded-lg font-medium shadow-sm text-xs"><i class="fa-solid fa-broom mr-1"></i>Reset Data</button>
                         </div>
                     </div>
@@ -448,7 +432,7 @@
                         </div>
                         <div class="bg-slate-800/50 px-6 py-3 border-t border-slate-700 flex justify-between text-sm text-slate-400">
                             <span id="table-info">Menampilkan 0 data</span>
-                            <span class="text-xs text-slate-500"><i class="fa-solid fa-hard-drive mr-1"></i> Database Lokal</span>
+                            <span id="storage-footer-status" class="text-xs text-slate-400"><i class="fa-solid fa-hard-drive mr-1"></i> Database Lokal + Cloud Supabase</span>
                         </div>
                     </div>
                 </div>
@@ -545,25 +529,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- BOTTOM NAVIGATION BAR KHUSUS ANDROID & iOS -->
-            <nav class="md:hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md text-slate-400 border-t border-slate-800 z-30 flex justify-around items-center py-1.5 px-1" style="padding-bottom: max(0.35rem, env(safe-area-inset-bottom));">
-                <a href="#" onclick="event.preventDefault(); window.switchMenu('dashboard')" id="bnav-dashboard" class="bnav-item text-blue-400 flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold">
-                    <i class="fa-solid fa-chart-pie text-sm mb-0.5"></i><span>Dashboard</span>
-                </a>
-                <a href="#" onclick="event.preventDefault(); window.switchMenu('data')" id="bnav-data" class="bnav-item flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-medium">
-                    <i class="fa-solid fa-database text-sm mb-0.5"></i><span>Data Uji</span>
-                </a>
-                <a href="#" onclick="event.preventDefault(); window.switchMenu('setsarana')" id="bnav-setsarana" class="bnav-item flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-medium">
-                    <i class="fa-solid fa-layer-group text-sm mb-0.5"></i><span>Set P24/48</span>
-                </a>
-                <a href="#" onclick="event.preventDefault(); window.openServerSyncModal()" class="bnav-item text-emerald-400 flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-semibold">
-                    <i class="fa-solid fa-cloud-arrow-up text-sm mb-0.5"></i><span>Server</span>
-                </a>
-                <a href="#" onclick="event.preventDefault(); window.switchMenu('pengaturan')" id="bnav-pengaturan" class="bnav-item flex flex-col items-center justify-center py-1 px-2 rounded-lg text-[10px] font-medium">
-                    <i class="fa-solid fa-user-gear text-sm mb-0.5"></i><span>Profil</span>
-                </a>
-            </nav>
         </main>
     </div>
 
@@ -684,74 +649,91 @@
             <div class="flex gap-3 justify-center"><button onclick="window.closeConfirmModal()" class="px-4 py-2 text-xs bg-gray-100 rounded-lg">Batal</button><button id="btn-confirm-delete" class="px-4 py-2 text-xs font-bold text-white bg-red-600 rounded-lg">Ya, Hapus</button></div>
         </div>
     </div>
-    <!-- MODAL SERVER PENYIMPANAN & SINKRONISASI LINTAS PERANGKAT -->
-    <div id="server-sync-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-4 bg-slate-900/75 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden flex flex-col max-h-[92dvh]">
-            <div class="px-5 py-4 bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white flex justify-between items-center shrink-0">
+    <!-- MODAL KONEKTOR SUPABASE -->
+    <div id="supabase-modal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/75 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+            <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-300 flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-server"></i>
-                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center font-bold"><i class="fa-solid fa-cloud-bolt"></i></div>
                     <div>
-                        <h3 class="font-bold text-sm sm:text-base">Server Penyimpanan & Cloud Sync</h3>
-                        <p class="text-[11px] text-blue-200">ID Akun: <span class="font-mono font-bold text-amber-300">datalogamjayateknik.04</span> (Android • iOS • PC)</p>
+                        <h3 class="font-bold text-sm sm:text-base">Konektor Cloud Supabase — RailSpring</h3>
+                        <p class="text-[11px] text-slate-400">Sinkronisasi otomatis arsip Excel pengujian pegas &amp; Set Sarana P24/P48 tanpa server 24/7</p>
                     </div>
                 </div>
-                <button onclick="window.closeServerSyncModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-red-600 text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                <button type="button" onclick="window.closeSupabaseModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-red-600 text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <div class="p-5 overflow-y-auto space-y-4 text-xs touch-scroll">
-                <!-- Status Penyimpanan Saat Ini -->
-                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div class="p-6 overflow-y-auto space-y-5 text-xs dark-scrollbar">
+                <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 space-y-1">
+                    <p class="font-bold"><i class="fa-solid fa-circle-info mr-1"></i>Bagaimana Konektor Ini Bekerja di Project Anda?</p>
+                    <p>Setiap kali Anda mengunggah file Excel baru/lanjutan atau menyimpan Set Sarana, RailSpring otomatis menyimpan datanya ke <strong>Supabase Database &amp; Storage</strong>. Agar semua pengunjung website GitHub Anda langsung terhubung tanpa perlu mengisi kunci manual, Anda juga bisa menempelkan URL &amp; Anon Key langsung pada variabel <code class="font-mono font-bold">DEFAULT_SUPABASE_URL</code> dan <code class="font-mono font-bold">DEFAULT_SUPABASE_ANON_KEY</code> di baris awal <code class="font-mono">&lt;script&gt;</code> file HTML ini.</p>
+                </div>
+
+                <div class="space-y-3">
                     <div>
-                        <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-ping"></span>
-                            <span class="font-bold text-emerald-950 uppercase tracking-wide text-[11px]">Database Permanen Akun Aktif</span>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">1. Supabase Project URL *</label>
+                        <input type="url" id="sb-input-url" placeholder="https://xyzcompany.supabase.co" class="block w-full py-2.5 px-3 border border-slate-300 rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-slate-700 uppercase mb-1">2. Supabase Anon Public Key *</label>
+                        <input type="text" id="sb-input-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." class="block w-full py-2.5 px-3 border border-slate-300 rounded-xl font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-slate-700 uppercase mb-1">Nama Bucket Storage (File .xlsx)</label>
+                            <input type="text" id="sb-input-bucket" value="railspring-storage" class="block w-full py-2 px-3 border border-slate-300 rounded-xl font-mono text-xs outline-none">
                         </div>
-                        <p class="text-emerald-800 mt-1 text-[11px]" id="server-modal-stats">Memuat status penyimpanan...</p>
-                    </div>
-                    <button onclick="window.syncNowToServer()" class="shrink-0 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg shadow-sm flex items-center gap-1.5">
-                        <i class="fa-solid fa-rotate"></i> Sinkronkan Sekarang
-                    </button>
-                </div>
-
-                <!-- Konfigurasi URL Server Cloud / LAN (Opsional Lintas Perangkat Otomatis) -->
-                <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
-                    <div class="flex justify-between items-center">
-                        <label class="font-bold text-slate-800 uppercase text-[11px]"><i class="fa-solid fa-cloud text-blue-600 mr-1.5"></i>URL Server Penyimpanan / Cloud API (Lintas Perangkat)</label>
-                        <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 font-semibold text-[10px]">Auto-Save saat Upload</span>
-                    </div>
-                    <p class="text-[11px] text-gray-500 leading-relaxed">
-                        Setiap kali Anda mengunggah file Excel pegas terupdate, data otomatis tersimpan permanen di perangkat ini <strong>dan</strong> dikirim ke Server Penyimpanan di bawah ini agar saat login di <strong>Android, iOS, atau PC</strong> lain datanya langsung muncul otomatis:
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-2">
-                        <input type="text" id="input-server-url" placeholder="Cth: http://192.168.1.10:3000/api/storage atau URL Cloud JSON..." class="flex-1 py-2 px-3 bg-white border border-gray-300 rounded-lg font-mono text-xs outline-none focus:border-blue-600">
-                        <button onclick="window.saveServerUrlConfig()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shrink-0">Simpan Server</button>
-                    </div>
-                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-gray-200/70 text-[11px] text-gray-500">
-                        <span>Ingin menjalankan server penyimpanan sendiri di PC kantor?</span>
-                        <button onclick="window.downloadNodeServerScript()" class="text-blue-600 hover:underline font-bold flex items-center gap-1"><i class="fa-solid fa-download"></i> Unduh Script Server (`server.js`)</button>
+                        <div>
+                            <label class="block font-bold text-slate-700 uppercase mb-1">Nama Tabel Sinkronisasi Data</label>
+                            <input type="text" id="sb-input-table" value="railspring_state" readonly class="block w-full py-2 px-3 bg-slate-100 border border-slate-300 rounded-xl font-mono text-xs text-slate-600 outline-none">
+                        </div>
                     </div>
                 </div>
 
-                <!-- Cadangan & Transfer Database Instan (File .json Server Snapshot) -->
-                <div class="p-4 rounded-xl bg-amber-50/60 border border-amber-200 space-y-2.5">
-                    <h4 class="font-bold text-amber-950 uppercase text-[11px]"><i class="fa-solid fa-file-shield text-amber-600 mr-1.5"></i>Transfer & Cadangan Database Akun (Android ⇄ iOS ⇄ PC)</h4>
-                    <p class="text-[11px] text-amber-900/80">
-                        Anda juga dapat mengunduh seluruh database pengujian akun <strong>datalogamjayateknik.04</strong> sebagai file snapshot server (`.json`) lalu mengunggahnya di HP Android, iPhone/iPad, atau PC lain tanpa perlu instalasi server:
-                    </p>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                        <button onclick="window.exportFullServerSnapshot()" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm">
-                            <i class="fa-solid fa-cloud-arrow-down text-amber-400"></i> Unduh Database Akun (.json)
-                        </button>
-                        <button onclick="document.getElementById('import-snapshot-input').click()" class="py-2.5 px-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Muat Database Akun (.json)
-                        </button>
-                        <input type="file" id="import-snapshot-input" accept=".json" class="hidden" onchange="window.importFullServerSnapshot(event)">
-                    </div>
+                <div class="flex flex-wrap gap-2 pt-1">
+                    <button type="button" onclick="window.saveSupabaseConfig()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-sm"><i class="fa-solid fa-plug-circle-check mr-1.5"></i>Simpan &amp; Hubungkan</button>
+                    <button type="button" onclick="window.pushLocalDataToSupabase()" class="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm"><i class="fa-solid fa-cloud-arrow-up mr-1.5"></i>Kirim Data Lokal ke Cloud</button>
+                    <button type="button" onclick="window.syncFromSupabaseCloud(true)" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-sm"><i class="fa-solid fa-cloud-arrow-down mr-1.5"></i>Tarik Data dari Cloud</button>
+                    <button type="button" onclick="window.disconnectSupabaseConfig()" class="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 font-semibold">Putuskan</button>
                 </div>
-            </div>
-            <div class="px-5 py-3 bg-gray-50 border-t flex justify-end shrink-0">
-                <button onclick="window.closeServerSyncModal()" class="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg text-xs">Tutup</button>
+
+                <div class="border-t border-slate-200 pt-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-800"><i class="fa-solid fa-database text-emerald-600 mr-1.5"></i>Langkah Wajib Sekali di Awal: Jalankan SQL Ini di Supabase</span>
+                        <button type="button" onclick="window.copySupabaseSetupSQL()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-[11px]"><i class="fa-regular fa-copy mr-1"></i>Salin Perintah SQL</button>
+                    </div>
+                    <p class="text-slate-500 text-[11px]">Buka dashboard Supabase Anda &rarr; menu <strong>SQL Editor</strong> &rarr; tempel perintah di bawah ini lalu klik <strong>Run</strong> untuk membuat tabel <code class="font-mono">railspring_state</code> dan bucket <code class="font-mono">railspring-storage</code> secara otomatis:</p>
+                    <pre id="sb-sql-setup-box" class="bg-slate-900 text-emerald-300 p-3.5 rounded-xl font-mono text-[11px] overflow-x-auto leading-relaxed">-- 1. Buat tabel penyimpanan arsip Excel & Set Sarana RailSpring
+create table if not exists public.railspring_state (
+  key text primary key,
+  value jsonb not null,
+  updated_at timestamptz default now()
+);
+
+alter table public.railspring_state enable row level security;
+
+drop policy if exists "RailSpring Public Read" on public.railspring_state;
+create policy "RailSpring Public Read" on public.railspring_state for select to anon using (true);
+
+drop policy if exists "RailSpring Public Insert" on public.railspring_state;
+create policy "RailSpring Public Insert" on public.railspring_state for insert to anon with check (true);
+
+drop policy if exists "RailSpring Public Update" on public.railspring_state;
+create policy "RailSpring Public Update" on public.railspring_state for update to anon using (true);
+
+-- 2. Buat bucket Storage untuk menyimpan file .xlsx asli
+insert into storage.buckets (id, name, public)
+values ('railspring-storage', 'railspring-storage', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "RailSpring Storage Read" on storage.objects;
+create policy "RailSpring Storage Read" on storage.objects for select to anon using (bucket_id = 'railspring-storage');
+
+drop policy if exists "RailSpring Storage Upload" on storage.objects;
+create policy "RailSpring Storage Upload" on storage.objects for insert to anon with check (bucket_id = 'railspring-storage');
+
+drop policy if exists "RailSpring Storage Update" on storage.objects;
+create policy "RailSpring Storage Update" on storage.objects for update to anon using (bucket_id = 'railspring-storage');</pre>
+                </div>
             </div>
         </div>
     </div>
@@ -761,15 +743,66 @@
     </div>
 
     <script>
+        // ============================================================================
+        // KONFIGURASI KONEKTOR SUPABASE (SERVERLESS CLOUD)
+        // Tips: Isi DEFAULT_SUPABASE_URL dan DEFAULT_SUPABASE_ANON_KEY di bawah ini
+        // sebelum upload ke GitHub agar semua pengunjung langsung melihat data terbaru.
+        // ============================================================================
+        const DEFAULT_SUPABASE_URL = '';      // Contoh: 'https://xyzcompany.supabase.co'
+        const DEFAULT_SUPABASE_ANON_KEY = ''; // Contoh: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        const DEFAULT_SUPABASE_BUCKET = 'railspring-storage';
+        const SUPABASE_STATE_TABLE = 'railspring_state';
+        const SUPABASE_CONFIG_KEY = 'railspring_supabase_config_v1';
+
+        window.supabaseConfig = {
+            url: DEFAULT_SUPABASE_URL,
+            anonKey: DEFAULT_SUPABASE_ANON_KEY,
+            bucket: DEFAULT_SUPABASE_BUCKET
+        };
+        try {
+            const savedSb = localStorage.getItem(SUPABASE_CONFIG_KEY);
+            if (savedSb) {
+                const parsedSb = JSON.parse(savedSb);
+                if (parsedSb.url) window.supabaseConfig.url = parsedSb.url;
+                if (parsedSb.anonKey) window.supabaseConfig.anonKey = parsedSb.anonKey;
+                if (parsedSb.bucket) window.supabaseConfig.bucket = parsedSb.bucket;
+            }
+        } catch(e) {}
+
+        window.supabaseClient = null;
+        window.initSupabaseClient = function() {
+            const url = (window.supabaseConfig.url || '').trim();
+            const key = (window.supabaseConfig.anonKey || '').trim();
+            const btn = document.getElementById('header-supabase-btn');
+            const dot = document.getElementById('header-supabase-dot');
+            const txt = document.getElementById('header-supabase-text');
+            const footer = document.getElementById('storage-footer-status');
+
+            if (url && key && url.startsWith('https://') && typeof window.supabase !== 'undefined') {
+                try {
+                    window.supabaseClient = window.supabase.createClient(url, key);
+                    if (btn) btn.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 cursor-pointer shadow-sm';
+                    if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+                    if (txt) txt.textContent = 'Cloud Supabase: Terhubung';
+                    if (footer) footer.innerHTML = '<i class="fa-solid fa-cloud-check mr-1 text-emerald-400"></i> Tersinkronisasi dengan Cloud Supabase';
+                    return true;
+                } catch (err) {
+                    window.supabaseClient = null;
+                }
+            }
+            window.supabaseClient = null;
+            if (btn) btn.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 cursor-pointer shadow-sm';
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+            if (txt) txt.textContent = 'Cloud Supabase: Klik untuk Set';
+            if (footer) footer.innerHTML = '<i class="fa-solid fa-hard-drive mr-1"></i> Database Lokal (Klik Setup Supabase untuk Cloud)';
+            return false;
+        };
+
         const DB_NAME = 'RailSpringPermanentDB';
         const DB_VERSION = 1;
         const EXCEL_STORAGE_KEY = 'excel_archives_v7_clean';
         const SETSARANA_STORAGE_KEY = 'sarana_sets_p24_p48_v1';
         let idbInstance = null;
-
-        const ACCOUNT_ID = 'datalogamjayateknik.04';
-        const CACHE_BACKUP_NAME = 'railspring-server-vault-v1';
-        window.serverUrl = localStorage.getItem('railspring_server_url') || '';
 
         function openPermanentDB() {
             return new Promise((resolve, reject) => {
@@ -781,130 +814,97 @@
             });
         }
 
-        // Dual-Vault Storage: Simpan di IndexedDB + CacheStorage Browser + Push Otomatis ke Server Penyimpanan
-        async function saveToPermanentDB(key, val, skipRemotePush = false) {
+        async function saveLocalIDBOnly(key, val) {
+            try { const db = await openPermanentDB(); const tx = db.transaction('state', 'readwrite'); tx.objectStore('state').put(val, key); } catch(err){}
+        }
+
+        async function loadLocalIDBOnly(key) {
             try {
                 const db = await openPermanentDB();
-                await new Promise((resolve, reject) => {
-                    const tx = db.transaction('state', 'readwrite');
-                    tx.objectStore('state').put(val, key);
-                    tx.oncomplete = () => resolve(true);
-                    tx.onerror = e => reject(e);
-                });
-            } catch(err) {}
+                return new Promise(resolve => { const tx = db.transaction('state', 'readonly'); const req = tx.objectStore('state').get(key); req.onsuccess = () => resolve(req.result); req.onerror = () => resolve(null); });
+            } catch(err) { return null; }
+        }
 
-            // Backup lapis kedua di CacheStorage (tahan banting di Android, iOS Safari & PC)
+        // Simpan ke IndexedDB Lokal sekaligus Sinkronkan Otomatis ke Supabase Cloud
+        async function saveToPermanentDB(key, val) {
+            await saveLocalIDBOnly(key, val);
+            if (!window.supabaseClient) window.initSupabaseClient();
+            if (!window.supabaseClient) return;
+
             try {
-                if ('caches' in window) {
-                    const cache = await caches.open(CACHE_BACKUP_NAME);
-                    const resp = new Response(JSON.stringify(val), { headers: { 'Content-Type': 'application/json' } });
-                    await cache.put(`https://railspring.local/vault/${encodeURIComponent(key)}`, resp);
+                // 1. Upsert ke tabel railspring_state di Supabase Database
+                const { error } = await window.supabaseClient
+                    .from(SUPABASE_STATE_TABLE)
+                    .upsert({ key: key, value: val, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+
+                // 2. Cadangkan juga sebagai file JSON di Supabase Storage bucket
+                const bucket = window.supabaseConfig.bucket || DEFAULT_SUPABASE_BUCKET;
+                const blob = new Blob([JSON.stringify(val)], { type: 'application/json' });
+                await window.supabaseClient.storage
+                    .from(bucket)
+                    .upload(`state/${key}.json`, blob, { upsert: true, contentType: 'application/json' });
+
+                if (error) {
+                    console.warn('Info tabel Supabase:', error.message);
                 }
-            } catch(err) {}
-
-            // Update timestamp penyimpanan terakhir
-            const nowStr = new Date().toLocaleString('id-ID');
-            try { localStorage.setItem('railspring_last_saved', nowStr); } catch(e){}
-            window.updateSyncBadgeUI('saved');
-
-            if (!skipRemotePush && window.serverUrl) {
-                window.pushStateToRemoteServer();
+            } catch (err) {
+                console.warn('Gagal sinkronisasi ke Supabase:', err);
             }
         }
 
+        // Muat dari Supabase Cloud terlebih dahulu (agar semua pengunjung melihat data yang sama), fallback ke IndexedDB Lokal
         async function loadFromPermanentDB(key) {
-            try {
-                const db = await openPermanentDB();
-                const idbVal = await new Promise(resolve => {
-                    const tx = db.transaction('state', 'readonly');
-                    const req = tx.objectStore('state').get(key);
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => resolve(null);
-                });
-                if (idbVal !== undefined && idbVal !== null) return idbVal;
-            } catch(err) {}
+            if (!window.supabaseClient) window.initSupabaseClient();
+            if (window.supabaseClient) {
+                try {
+                    // 1. Coba ambil dari tabel railspring_state
+                    const { data, error } = await window.supabaseClient
+                        .from(SUPABASE_STATE_TABLE)
+                        .select('value')
+                        .eq('key', key)
+                        .maybeSingle();
 
-            // Fallback dari CacheStorage jika IndexedDB direset oleh OS mobile
-            try {
-                if ('caches' in window) {
-                    const cache = await caches.open(CACHE_BACKUP_NAME);
-                    const match = await cache.match(`https://railspring.local/vault/${encodeURIComponent(key)}`);
-                    if (match) return await match.json();
+                    if (!error && data && data.value !== undefined && data.value !== null) {
+                        await saveLocalIDBOnly(key, data.value);
+                        return data.value;
+                    }
+
+                    // 2. Fallback: coba ambil dari Storage bucket state/<key>.json
+                    const bucket = window.supabaseConfig.bucket || DEFAULT_SUPABASE_BUCKET;
+                    const { data: pubData } = window.supabaseClient.storage
+                        .from(bucket)
+                        .getPublicUrl(`state/${key}.json`);
+                    if (pubData && pubData.publicUrl) {
+                        const resp = await fetch(pubData.publicUrl + '?t=' + Date.now());
+                        if (resp.ok) {
+                            const cloudVal = await resp.json();
+                            if (cloudVal !== null && cloudVal !== undefined) {
+                                await saveLocalIDBOnly(key, cloudVal);
+                                return cloudVal;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Menggunakan cache lokal untuk', key);
                 }
-            } catch(err) {}
-            return null;
+            }
+            return await loadLocalIDBOnly(key);
         }
 
-        window.updateSyncBadgeUI = function(state = 'saved') {
-            const dot = document.getElementById('sync-dot');
-            const txt = document.getElementById('sync-status-text');
-            if (!dot || !txt) return;
-            if (state === 'syncing') {
-                dot.className = 'w-2 h-2 rounded-full bg-amber-500 animate-ping';
-                txt.textContent = 'Menyinkronkan Server...';
-            } else if (state === 'cloud') {
-                dot.className = 'w-2 h-2 rounded-full bg-blue-600';
-                txt.textContent = 'Tersinkron ke Server Cloud';
-            } else {
-                dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
-                const totalUji = (window.dbData || []).reduce((acc, a) => acc + (window.getArchiveSummary ? window.getArchiveSummary(a).total : 0), 0);
-                txt.textContent = totalUji > 0 ? `Tersimpan (${totalUji.toLocaleString('id-ID')} Uji)` : 'Server Tersimpan';
+        // Fungsi Upload File .xlsx Mentah ke Supabase Storage saat Admin Upload Excel Mingguan
+        window.uploadRawExcelToSupabaseStorage = async function(file) {
+            if (!file) return;
+            if (!window.supabaseClient) window.initSupabaseClient();
+            if (!window.supabaseClient) return;
+            try {
+                const bucket = window.supabaseConfig.bucket || DEFAULT_SUPABASE_BUCKET;
+                const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+                await window.supabaseClient.storage
+                    .from(bucket)
+                    .upload(`excel/${safeName}`, file, { upsert: true });
+            } catch (err) {
+                console.warn('Upload file mentah Excel ke Storage dilewati:', err);
             }
-        };
-
-        window.pushStateToRemoteServer = async function() {
-            if (!window.serverUrl) return false;
-            try {
-                window.updateSyncBadgeUI('syncing');
-                const payload = {
-                    account: ACCOUNT_ID,
-                    updatedAt: new Date().toISOString(),
-                    dbData: window.dbData || [],
-                    saranaSets: window.saranaSets || [],
-                    userProfile: window.userProfile || {}
-                };
-                const res = await fetch(window.serverUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                if (res.ok) {
-                    window.updateSyncBadgeUI('cloud');
-                    return true;
-                }
-            } catch(err) {}
-            window.updateSyncBadgeUI('saved');
-            return false;
-        };
-
-        window.pullStateFromRemoteServer = async function() {
-            if (!window.serverUrl) return false;
-            try {
-                window.updateSyncBadgeUI('syncing');
-                const url = window.serverUrl.includes('?') ? `${window.serverUrl}&account=${ACCOUNT_ID}` : `${window.serverUrl}?account=${ACCOUNT_ID}`;
-                const res = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
-                if (res.ok) {
-                    const data = await res.json();
-                    const remotePayload = data?.record || data;
-                    if (remotePayload && Array.isArray(remotePayload.dbData) && remotePayload.dbData.length > 0) {
-                        window.dbData = remotePayload.dbData.map(ensureArchiveMetadata);
-                        await saveToPermanentDB(EXCEL_STORAGE_KEY, window.dbData, true);
-                    }
-                    if (remotePayload && Array.isArray(remotePayload.saranaSets) && remotePayload.saranaSets.length > 0) {
-                        window.saranaSets = remotePayload.saranaSets;
-                        await saveToPermanentDB(SETSARANA_STORAGE_KEY, window.saranaSets, true);
-                    }
-                    if (remotePayload && remotePayload.userProfile && remotePayload.userProfile.name) {
-                        window.userProfile = { ...window.userProfile, ...remotePayload.userProfile };
-                        await saveToPermanentDB('user_profile_v1', window.userProfile, true);
-                        window.updateProfileUI();
-                    }
-                    window.updateSyncBadgeUI('cloud');
-                    return true;
-                }
-            } catch(err) {}
-            window.updateSyncBadgeUI('saved');
-            return false;
         };
 
         window.userProfile = { name: "Mario Putra", email: "mario.putra@kai.id", phone: "0812-3456-7890", role: "Administrator", unit: "Balai Yasa Tegal - Logam Jaya Teknik", photoUrl: "" };
@@ -1310,9 +1310,6 @@
         };
 
         async function loadAllSavedData() {
-            if (window.serverUrl) {
-                await window.pullStateFromRemoteServer();
-            }
             let savedExcel = await loadFromPermanentDB(EXCEL_STORAGE_KEY);
             if (!Array.isArray(savedExcel) || savedExcel.length === 0) {
                 for (const k of ['excel_archives_v5_auto', 'excel_archives_v4', 'excel_archives_v3']) {
@@ -1650,6 +1647,7 @@
                 const existIdx = window.dbData.findIndex(d => d.nomor.toLowerCase() === rec.nomor.toLowerCase());
                 if (existIdx !== -1) { rec.id = window.dbData[existIdx].id; window.dbData[existIdx] = rec; }
                 else window.dbData.unshift(rec);
+                await window.uploadRawExcelToSupabaseStorage(window.selectedExcelFile_new);
                 await saveToPermanentDB(EXCEL_STORAGE_KEY, window.dbData);
                 window.closeExcelModal(); window.handleSearch(); window.updateDashboardStats(); window.refreshDashboardTracker(); window.populateSpringPickers(); window.renderPdfCatalog();
                 window.showToast(`Sukses menyimpan ${parsed.totalExtracted.toLocaleString('id-ID')} data dari ${parsed.monthCount} bulan!`, 'success');
@@ -1676,6 +1674,7 @@
                 parsed.recordsByMonth[m].forEach(r => target.excelData[m].push(r));
             });
             target.excelData = autoSequenceAndHealMonths(target.excelData, getArchiveDefaultPrefix(target));
+            await window.uploadRawExcelToSupabaseStorage(window.selectedExcelFile_lanjutan);
             await saveToPermanentDB(EXCEL_STORAGE_KEY, window.dbData);
             window.closeLanjutanModal(); window.handleSearch(); window.updateDashboardStats(); window.refreshDashboardTracker(); window.populateSpringPickers();
             window.showToast('Data lanjutan berhasil digabungkan!', 'success');
@@ -1820,57 +1819,11 @@
             document.getElementById('stat-setsarana').innerHTML = `${window.saranaSets.length} Set`;
             document.getElementById('stat-top').textContent = window.dbData.length > 0 ? window.dbData[0].sarana : '-';
             if (typeof window.renderDashboardCharts === 'function') window.renderDashboardCharts();
-            if (typeof window.updateSyncBadgeUI === 'function') window.updateSyncBadgeUI(window.serverUrl ? 'cloud' : 'saved');
-        };
-
-        window.toggleMobileSidebar = function(forceState) {
-            const sb = document.getElementById('main-sidebar');
-            const bd = document.getElementById('mobile-sidebar-backdrop');
-            if (!sb || !bd) return;
-            const isOpen = !sb.classList.contains('-translate-x-full');
-            const nextState = typeof forceState === 'boolean' ? forceState : !isOpen;
-            if (nextState) {
-                sb.classList.remove('-translate-x-full');
-                bd.classList.remove('hidden');
-            } else {
-                sb.classList.add('-translate-x-full');
-                bd.classList.add('hidden');
-            }
         };
 
         window.switchMenu = function(viewName) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-' + viewName)?.classList.remove('hidden');
-
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('bg-blue-600', 'text-white');
-                el.classList.add('text-slate-400');
-            });
-            const activeSide = document.getElementById('nav-' + viewName);
-            if (activeSide) {
-                activeSide.classList.add('bg-blue-600', 'text-white');
-                activeSide.classList.remove('text-slate-400');
-            }
-
-            document.querySelectorAll('.bnav-item').forEach(el => {
-                if (!el.classList.contains('text-emerald-400')) el.classList.remove('text-blue-400', 'font-bold');
-            });
-            const activeBot = document.getElementById('bnav-' + viewName);
-            if (activeBot) activeBot.classList.add('text-blue-400', 'font-bold');
-
-            const titles = {
-                dashboard: 'Dashboard & Pelacakan',
-                setsarana: 'Set Sarana (P24/P48)',
-                data: 'Data Pengujian Pegas',
-                laporan: 'Laporan & Analisis AI',
-                parameter: 'Parameter Pegas',
-                pengaturan: 'Pengaturan & Biodata'
-            };
-            document.getElementById('header-title').textContent = titles[viewName] || 'Dashboard';
-
-            // Tutup drawer otomatis di Android / iOS setelah memilih menu
-            window.toggleMobileSidebar(false);
-
             if (viewName === 'dashboard') { window.updateDashboardStats(); window.refreshDashboardTracker(); }
             if (viewName === 'parameter') window.renderPdfCatalog();
         };
@@ -1991,16 +1944,6 @@
             window.showToast('Foto profil dikembalikan ke inisial.', 'success');
         };
 
-        window.enterAppSession = function() {
-            document.getElementById('login-page').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('login-page').classList.add('hidden');
-                document.getElementById('app-layout').classList.remove('hidden');
-                document.getElementById('app-layout').style.opacity = '1';
-                loadAllSavedData();
-            }, 200);
-        };
-
         window.handleLogin = function() {
             const uInput = (document.getElementById('username')?.value || '').trim();
             const pInput = (document.getElementById('password')?.value || '').trim();
@@ -2012,168 +1955,19 @@
                 return;
             }
 
-            try { localStorage.setItem('railspring_auth_session', VALID_USER); } catch(e){}
-            window.showToast('Login berhasil. Memuat data pengujian tersimpan...', 'success');
-            window.enterAppSession();
+            window.showToast('Login berhasil. Membuka sistem RailSpring...', 'success');
+            document.getElementById('login-page').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('app-layout').classList.remove('hidden');
+                document.getElementById('app-layout').style.opacity = '1';
+                loadAllSavedData();
+            }, 250);
         };
-
         window.handleLogout = function() {
-            try { localStorage.removeItem('railspring_auth_session'); } catch(e){}
-            window.toggleMobileSidebar(false);
             document.getElementById('app-layout').classList.add('hidden');
             document.getElementById('login-page').classList.remove('hidden');
             document.getElementById('login-page').style.opacity = '1';
-            window.showToast('Anda telah keluar. Data pengujian tetap tersimpan aman di server.', 'success');
-        };
-
-        window.openServerSyncModal = function() {
-            const modal = document.getElementById('server-sync-modal');
-            const urlInp = document.getElementById('input-server-url');
-            const statsEl = document.getElementById('server-modal-stats');
-            if (urlInp) urlInp.value = window.serverUrl || '';
-            let totalUji = 0, totalMonths = 0;
-            (window.dbData || []).forEach(a => {
-                const s = window.getArchiveSummary(a);
-                totalUji += s.total;
-                totalMonths += s.months.length;
-            });
-            const lastSaved = localStorage.getItem('railspring_last_saved') || 'Baru saja';
-            if (statsEl) {
-                statsEl.innerHTML = `Tersimpan <strong>${window.dbData.length} File Arsip</strong> (<strong>${totalUji.toLocaleString('id-ID')} Pengujian Pegas</strong> dalam ${totalMonths} Bulan) & <strong>${window.saranaSets.length} Set Sarana</strong> • Update Terakhir: <strong>${lastSaved}</strong>`;
-            }
-            modal.classList.remove('hidden');
-        };
-
-        window.closeServerSyncModal = function() {
-            document.getElementById('server-sync-modal').classList.add('hidden');
-        };
-
-        window.saveServerUrlConfig = async function() {
-            const val = (document.getElementById('input-server-url')?.value || '').trim();
-            window.serverUrl = val;
-            try { localStorage.setItem('railspring_server_url', val); } catch(e){}
-            if (val) {
-                const ok = await window.pushStateToRemoteServer();
-                if (!ok) await window.pullStateFromRemoteServer();
-                window.showToast('URL Server Penyimpanan disimpan & disinkronkan!', 'success');
-            } else {
-                window.showToast('Mode penyimpanan diatur ke Database Permanen Lokal.', 'success');
-            }
-            window.openServerSyncModal();
-        };
-
-        window.syncNowToServer = async function() {
-            await saveToPermanentDB(EXCEL_STORAGE_KEY, window.dbData);
-            await saveToPermanentDB(SETSARANA_STORAGE_KEY, window.saranaSets);
-            await saveToPermanentDB('user_profile_v1', window.userProfile);
-            if (window.serverUrl) {
-                const pushed = await window.pushStateToRemoteServer();
-                if (pushed) window.showToast('Data berhasil disinkronkan ke Server Cloud!', 'success');
-                else window.showToast('Tersimpan di Vault Perangkat (Server URL belum merespons).', 'success');
-            } else {
-                window.showToast('Seluruh data pengujian telah dikunci permanen di penyimpanan akun!', 'success');
-            }
-            window.openServerSyncModal();
-        };
-
-        window.exportFullServerSnapshot = function() {
-            const snapshot = {
-                app: 'RailSpring',
-                account: ACCOUNT_ID,
-                exportedAt: new Date().toISOString(),
-                dbData: window.dbData || [],
-                saranaSets: window.saranaSets || [],
-                userProfile: window.userProfile || {}
-            };
-            const blob = new Blob([JSON.stringify(snapshot)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `RailSpring_Server_Database_${ACCOUNT_ID}_${new Date().toISOString().slice(0,10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            window.showToast('File Database Server (.json) berhasil diunduh!', 'success');
-        };
-
-        window.importFullServerSnapshot = function(e) {
-            const file = e.target.files && e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(evt) {
-                try {
-                    const parsed = JSON.parse(evt.target.result);
-                    if (Array.isArray(parsed.dbData)) {
-                        window.dbData = parsed.dbData.map(ensureArchiveMetadata);
-                        await saveToPermanentDB(EXCEL_STORAGE_KEY, window.dbData);
-                    }
-                    if (Array.isArray(parsed.saranaSets)) {
-                        window.saranaSets = parsed.saranaSets;
-                        await saveToPermanentDB(SETSARANA_STORAGE_KEY, window.saranaSets);
-                    }
-                    if (parsed.userProfile && typeof parsed.userProfile === 'object') {
-                        window.userProfile = { ...window.userProfile, ...parsed.userProfile };
-                        await saveToPermanentDB('user_profile_v1', window.userProfile);
-                        window.updateProfileUI();
-                    }
-                    window.updateDashboardStats();
-                    window.handleSearch();
-                    window.refreshDashboardTracker();
-                    window.populateSpringPickers();
-                    window.renderSetSaranaList();
-                    window.renderPdfCatalog();
-                    window.openServerSyncModal();
-                    window.showToast('Database Server berhasil dimuat & disinkronkan!', 'success');
-                } catch(err) {
-                    window.showToast('File JSON tidak valid!', 'error');
-                }
-            };
-            reader.readAsText(file);
-        };
-
-        window.downloadNodeServerScript = function() {
-            const srvCode = [
-                "// ===================================================================",
-                "// RAILSPRING STORAGE SERVER (Node.js) - Balai Yasa Tegal",
-                "// Cara menjalankan di PC Server: node server.js",
-                "// ===================================================================",
-                "const http = require('http');",
-                "const fs = require('fs');",
-                "const path = require('path');",
-                "const DB_FILE = path.join(__dirname, 'railspring_server_db.json');",
-                "const PORT = process.env.PORT || 3000;",
-                "",
-                "http.createServer((req, res) => {",
-                "  res.setHeader('Access-Control-Allow-Origin', '*');",
-                "  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');",
-                "  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');",
-                "  if (req.method === 'OPTIONS') { res.writeHead(204); return res.end(); }",
-                "  if (req.method === 'GET') {",
-                "    if (fs.existsSync(DB_FILE)) {",
-                "      res.writeHead(200, { 'Content-Type': 'application/json' });",
-                "      return res.end(fs.readFileSync(DB_FILE, 'utf8'));",
-                "    }",
-                "    res.writeHead(200, { 'Content-Type': 'application/json' });",
-                "    return res.end(JSON.stringify({ dbData: [], saranaSets: [] }));",
-                "  }",
-                "  if (req.method === 'POST') {",
-                "    let body = '';",
-                "    req.on('data', chunk => body += chunk);",
-                "    req.on('end', () => {",
-                "      fs.writeFileSync(DB_FILE, body, 'utf8');",
-                "      res.writeHead(200, { 'Content-Type': 'application/json' });",
-                "      res.end(JSON.stringify({ status: 'saved' }));",
-                "    });",
-                "  }",
-                "}).listen(PORT, '0.0.0.0', () => console.log('RailSpring Storage Server aktif di http://localhost:' + PORT + '/api/storage'));"
-            ].join('\n');
-            const blob = new Blob([srvCode], { type: 'application/javascript' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'server.js';
-            a.click();
-            URL.revokeObjectURL(url);
-            window.showToast('Script server.js berhasil diunduh!', 'success');
         };
         window.openExcelModal = function() { document.getElementById('excel-modal').classList.remove('hidden'); };
         window.closeExcelModal = function() { document.getElementById('excel-modal').classList.add('hidden'); };
@@ -2189,14 +1983,73 @@
             t.className = `fixed top-5 right-5 z-[80] transition-transform duration-300 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white ${type==='success'?'bg-emerald-600':'bg-red-600'}`;
             setTimeout(() => t.classList.add('translate-x-full'), 3000);
         };
+        window.openSupabaseModal = function() {
+            document.getElementById('sb-input-url').value = window.supabaseConfig.url || '';
+            document.getElementById('sb-input-key').value = window.supabaseConfig.anonKey || '';
+            document.getElementById('sb-input-bucket').value = window.supabaseConfig.bucket || DEFAULT_SUPABASE_BUCKET;
+            document.getElementById('supabase-modal').classList.remove('hidden');
+        };
+        window.closeSupabaseModal = function() {
+            document.getElementById('supabase-modal').classList.add('hidden');
+        };
+        window.saveSupabaseConfig = async function() {
+            const url = document.getElementById('sb-input-url').value.trim();
+            const anonKey = document.getElementById('sb-input-key').value.trim();
+            const bucket = document.getElementById('sb-input-bucket').value.trim() || DEFAULT_SUPABASE_BUCKET;
+            if (!url.startsWith('https://') || anonKey.length < 20) {
+                return window.showToast('Masukkan Project URL (https://...) dan Anon Key yang valid!', 'error');
+            }
+            window.supabaseConfig = { url, anonKey, bucket };
+            try { localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify(window.supabaseConfig)); } catch(e){}
+            const ok = window.initSupabaseClient();
+            if (ok) {
+                window.showToast('Berhasil terhubung ke Supabase! Menyinkronkan data...', 'success');
+                await window.syncFromSupabaseCloud(false);
+                window.closeSupabaseModal();
+            } else {
+                window.showToast('Gagal menginisialisasi klien Supabase.', 'error');
+            }
+        };
+        window.disconnectSupabaseConfig = function() {
+            window.supabaseConfig = { url: '', anonKey: '', bucket: DEFAULT_SUPABASE_BUCKET };
+            try { localStorage.removeItem(SUPABASE_CONFIG_KEY); } catch(e){}
+            window.initSupabaseClient();
+            window.showToast('Koneksi Supabase diputuskan. Menggunakan penyimpanan lokal.', 'success');
+        };
+        window.pushLocalDataToSupabase = async function() {
+            if (!window.initSupabaseClient()) {
+                return window.showToast('Isi Project URL & Anon Key terlebih dahulu!', 'error');
+            }
+            window.showToast('Mengirim arsip Excel & Set Sarana ke Supabase Cloud...', 'success');
+            await saveToPermanentDB(EXCEL_STORAGE_KEY, window.dbData);
+            await saveToPermanentDB(SETSARANA_STORAGE_KEY, window.saranaSets);
+            await saveToPermanentDB('user_profile_v1', window.userProfile);
+            window.showToast('Seluruh data lokal berhasil diunggah ke Supabase Cloud!', 'success');
+        };
+        window.syncFromSupabaseCloud = async function(showNotification = true) {
+            if (!window.initSupabaseClient()) {
+                if (showNotification) window.openSupabaseModal();
+                return;
+            }
+            if (showNotification) window.showToast('Menarik data terbaru dari Supabase Cloud...', 'success');
+            await loadAllSavedData();
+            if (showNotification) window.showToast('Data berhasil disinkronkan dari Supabase Cloud!', 'success');
+        };
+        window.copySupabaseSetupSQL = function() {
+            const sqlText = document.getElementById('sb-sql-setup-box').textContent;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(sqlText).then(() => window.showToast('Perintah SQL berhasil disalin! Tempel di SQL Editor Supabase.', 'success'));
+            } else {
+                const ta = document.createElement('textarea');
+                ta.value = sqlText; document.body.appendChild(ta); ta.select();
+                try { document.execCommand('copy'); window.showToast('Perintah SQL berhasil disalin!', 'success'); } catch(e){}
+                document.body.removeChild(ta);
+            }
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
+            window.initSupabaseClient();
             window.updateProfileUI();
-            try {
-                const activeSession = localStorage.getItem('railspring_auth_session');
-                if (activeSession && activeSession.toLowerCase() === 'datalogamjayateknik.04') {
-                    window.enterAppSession();
-                }
-            } catch(e){}
         });
     </script>
 </body>
